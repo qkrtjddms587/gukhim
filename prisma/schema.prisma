@@ -1,0 +1,192 @@
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// 1. 소속 단체 (1뎁스)
+model Organization {
+  id           Int           @id @default(autoincrement())
+  name         String        @unique
+  generations  Generation[]
+  affiliations Affiliation[]
+  createdAt    DateTime      @default(now())
+
+  deletedAt DateTime?
+  Post      Post[]
+  position  Position[]
+}
+
+// 2. 기수 (2뎁스)
+model Generation {
+  id             Int           @id @default(autoincrement())
+  name           String // 예: "1기", "2026년 상반기"
+  organizationId Int
+  organization   Organization  @relation(fields: [organizationId], references: [id])
+  affiliations   Affiliation[]
+  createdAt      DateTime      @default(now())
+
+  deletedAt DateTime?
+
+  @@unique([organizationId, name])
+}
+
+// 3. 회원 (고유 인물)
+model Member {
+  id Int @id @default(autoincrement())
+
+  loginId  String @unique // 로그인용 아이디
+  password String // 암호화된 비밀번호
+
+  name  String
+  phone String  @unique // 전화번호로 식별
+  email String? @unique
+
+  image String?
+
+  // 외부 사회 정보
+  company String? // 회사명
+  job     String? // 직종
+  address String? // 주소
+
+  affiliations Affiliation[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  Post         Post[]
+  Comment      Comment[]
+}
+
+// 4. 가입 정보 (중간 테이블)
+model Affiliation {
+  id                  Int             @id @default(autoincrement())
+  memberId            Int
+  member              Member          @relation(fields: [memberId], references: [id])
+  organizationId      Int
+  organization        Organization    @relation(fields: [organizationId], references: [id])
+  generationId        Int
+  generation          Generation      @relation(fields: [generationId], references: [id])
+  role                String          @default("USER") // ADMIN,MANAGER,USER
+  status              String          @default("ACTIVE")
+  membershipExpiresAt DateTime?
+  fees                MembershipFee[]
+
+  greeting Greeting?
+
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  Position   Position? @relation(fields: [positionId], references: [id])
+  positionId Int?
+
+  @@unique([memberId, organizationId, generationId])
+}
+
+// 5. 회비 납부 내역
+model MembershipFee {
+  id            String      @id // PG Order ID (직접 생성)
+  affiliationId Int
+  affiliation   Affiliation @relation(fields: [affiliationId], references: [id])
+  amount        Int
+
+  // 이 결제로 인해 언제부터 언제까지 연장되었는지 기록
+  validFrom  DateTime
+  validUntil DateTime
+
+  status    String    @default("PENDING")
+  pgTid     String?
+  paidAt    DateTime?
+  updatedAt DateTime  @updatedAt
+}
+
+model Post {
+  id        Int    @id @default(autoincrement())
+  title     String
+  content   String // 내용은 텍스트 또는 HTML
+  viewCount Int    @default(0)
+
+  // 게시글 타입 (공지사항, 자유게시판, 행사 등)
+  type String @default("FREE")
+
+  // 작성자 정보
+  authorId Int
+  author   Member @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  // 어느 단체의 글인지
+  organizationId Int
+  organization   Organization @relation(fields: [organizationId], references: [id])
+
+  // 이미지와 댓글 (1:N)
+  images   PostImage[]
+  comments Comment[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model PostImage {
+  id     Int    @id @default(autoincrement())
+  url    String
+  postId Int
+  post   Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
+}
+
+model Comment {
+  id      Int    @id @default(autoincrement())
+  content String
+
+  memberId Int
+  member   Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  postId Int
+  post   Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Greeting {
+  id Int @id @default(autoincrement())
+
+  // 누구의 인사말인가? (Affiliation을 통하면 Member, Org, Gen 정보를 한 번에 알 수 있음)
+  affiliationId Int         @unique // 한 명의 회장은 하나의 기수에 하나의 인사말만 (필요시 unique 제거)
+  affiliation   Affiliation @relation(fields: [affiliationId], references: [id], onDelete: Cascade)
+
+  title    String? // 인사말 제목 (예: "제 5대 회장 취임사")
+  content  String // 인사말 본문 (HTML/Text)
+  imageUrl String? // 인사말용 특별 사진 (기존 프로필과 다를 수 있음)
+
+  isActive Boolean @default(true) // 현재 노출 여부
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Position {
+  id Int @id @default(autoincrement())
+
+  // 어느 조직의 직책인지
+  organizationId Int
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  name        String // 예: "회장", "사무국장"
+  rank        Int // 서열 (1: 최상위, 숫자가 클수록 하위)
+  isExecutive Boolean @default(false) // 임원 여부
+
+  // 🌳 [트리 구조 핵심] 상위 직책(Reports To) 정의
+  parentId Int? // 최상위(회장)면 null
+  parent   Position?  @relation("PositionHierarchy", fields: [parentId], references: [id])
+  children Position[] @relation("PositionHierarchy") // 내 밑의 하위 직책들
+
+  duesAmount Int @default(0)
+
+  duesCycle String @default("NONE")
+
+  // 이 직책을 맡은 사람들
+  affiliations Affiliation[]
+
+  @@unique([organizationId, name])
+}

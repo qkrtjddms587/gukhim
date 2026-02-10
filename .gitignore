@@ -39,3 +39,18 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+/src/generated/prisma
+
+# 환경변수 (보안! 절대 올리면 안됨)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Prisma & SQLite (데이터! 절대 올리면 안됨)
+*.db
+*.db-journal
+/prisma/*.db
+/prisma/*.db-journal
