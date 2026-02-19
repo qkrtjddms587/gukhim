@@ -16,6 +16,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "국민의 힘 - 대구청년정치연수원",
   description: "국민의 힘",
+  icons: {
+    icon: "/favicon.png",
+  },
 };
 
 export default function RootLayout({

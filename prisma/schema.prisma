@@ -54,11 +54,14 @@ model Member {
   job     String? // 직종
   address String? // 주소
 
-  affiliations Affiliation[]
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
-  Post         Post[]
-  Comment      Comment[]
+  affiliations    Affiliation[]
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  Post            Post[]
+  Comment         Comment[]
+  RefreshToken    RefreshToken[]
+  LoginCode       LoginCode[]
+  DevicePushToken DevicePushToken[]
 }
 
 // 4. 가입 정보 (중간 테이블)
@@ -189,4 +192,50 @@ model Position {
   affiliations Affiliation[]
 
   @@unique([organizationId, name])
+}
+
+model RefreshToken {
+  id         String    @id @default(cuid())
+  memberId   Int
+  tokenHash  String    @unique
+  deviceId   String? // 네이티브에서 생성한 UUID(권장)
+  userAgent  String?
+  ip         String?
+  createdAt  DateTime  @default(now())
+  expiresAt  DateTime
+  revokedAt  DateTime?
+  replacedBy String? // rotation 시 새 토큰 id 기록(선택)
+
+  member Member @relation(fields: [memberId], references: [id])
+
+  @@index([memberId])
+  @@index([deviceId])
+}
+
+model LoginCode {
+  code      String    @id // 랜덤값(충분히 길게)
+  memberId  Int
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  member Member @relation(fields: [memberId], references: [id])
+
+  @@index([memberId])
+  @@index([expiresAt])
+}
+
+model DevicePushToken {
+  id        String   @id @default(cuid())
+  memberId  Int
+  platform  String // ios | android
+  token     String
+  deviceId  String?
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+
+  member Member @relation(fields: [memberId], references: [id])
+
+  @@unique([platform, token])
+  @@index([memberId])
 }

@@ -74,7 +74,9 @@ export function UserNav() {
                   />
                 </div>
                 {/* 로고 옆에 소속 이름 표시 */}
-                <div className="text-xl text-slate-700">{orgName}</div>
+                <div className="text-lg md:text-xl text-slate-700">
+                  {orgName}
+                </div>
               </div>
             </Link>
           </div>

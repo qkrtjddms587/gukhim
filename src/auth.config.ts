@@ -8,8 +8,12 @@ export const authConfig = {
     // 미들웨어에서 로그인 여부를 체크하는 로직
     authorized({ auth, request: { nextUrl } }) {
       const isLoggedIn = !!auth?.user;
-      const isOnLoginPage = nextUrl.pathname.startsWith("/login");
+      const path = nextUrl.pathname;
 
+      const isOnLoginPage = path.startsWith("/login");
+      const isBootstrap = path.startsWith("/app/bootstrap");
+
+      if (isBootstrap) return true;
       // 1. 로그인 했는데 로그인 페이지로 가려면 -> 메인으로 보냄
       if (isOnLoginPage && isLoggedIn) {
         return Response.redirect(new URL("/", nextUrl));
