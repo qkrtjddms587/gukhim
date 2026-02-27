@@ -1,5 +1,6 @@
 "use server";
 
+import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
@@ -56,7 +57,7 @@ export async function registerMemberAction(
             organizationId: aff.orgId,
             generationId: aff.genId,
             role: "USER",
-            status: "PENDING",
+            status: "ACTIVE",
             updatedAt: new Date(),
           },
         });
@@ -67,5 +68,47 @@ export async function registerMemberAction(
   } catch (error) {
     console.error(error);
     return { success: false, message: "서버 오류가 발생했습니다." };
+  }
+}
+
+export async function setupInitialPasswordAction(formData: FormData) {
+  try {
+    const session = await auth();
+    if (!session?.user?.id)
+      return { success: false, error: "로그인이 필요합니다." };
+
+    const newPassword = formData.get("newPassword") as string;
+    const confirmPassword = formData.get("confirmPassword") as string;
+
+    if (!newPassword || newPassword !== confirmPassword) {
+      return { success: false, error: "비밀번호가 일치하지 않습니다." };
+    }
+
+    if (newPassword.length < 4) {
+      return { success: false, error: "비밀번호는 4자리 이상이어야 합니다." };
+    }
+
+    const memberId = Number(session.user.id);
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // 🌟 트랜잭션: 비밀번호 변경과 ACTIVE 전환을 동시에 처리
+    await prisma.$transaction(async (tx) => {
+      // 1. 멤버 비밀번호 업데이트
+      await tx.member.update({
+        where: { id: memberId },
+        data: { password: hashedPassword },
+      });
+
+      // 2. 이 멤버의 모든 PENDING 상태를 ACTIVE로 활성화
+      await tx.affiliation.updateMany({
+        where: { memberId: memberId, status: "PENDING" },
+        data: { status: "ACTIVE" },
+      });
+    });
+
+    return { success: true };
+  } catch (error) {
+    console.error("[SETUP_PASSWORD_ERROR]", error);
+    return { success: false, error: "비밀번호 설정 중 오류가 발생했습니다." };
   }
 }

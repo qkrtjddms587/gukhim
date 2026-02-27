@@ -14,10 +14,10 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "국민의 힘 - 대구청년정치연수원",
-  description: "국민의 힘",
+  title: "청년정치연수원",
+  description: "청년정치연수원 회원용 어플리케이션입니다.",
   icons: {
-    icon: "/favicon.png",
+    icon: "/favicon.webp",
   },
 };
 

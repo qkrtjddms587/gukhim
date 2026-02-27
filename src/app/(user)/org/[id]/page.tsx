@@ -9,7 +9,6 @@ import {
   FileText,
   Bell,
   ChevronRight,
-  ArrowLeft,
   Megaphone,
   Calendar,
 } from "lucide-react";
@@ -38,6 +37,7 @@ export default async function OrgHomePage({ params }: Props) {
   // 소속이 아니면 로비로 쫓아냄
   if (!myAffiliation) redirect("/");
 
+  console.log(myAffiliation);
   // 2. 최신 공지사항 5개 가져오기 (Post 모델이 있다고 가정)
   // 아직 Post 모델이 없다면 빈 배열로 처리됨
   const recentPosts = await prisma.post
@@ -58,6 +58,7 @@ export default async function OrgHomePage({ params }: Props) {
     { label: "회칙", icon: FileText, href: `/org/${orgId}/rules` },
     { label: "회비수납", icon: Megaphone, href: `/org/${orgId}/dues` },
     { label: "공지사항", icon: Bell, href: `/org/${orgId}/community` },
+    { label: "관리자모드", icon: Bell, href: `/admin` },
   ];
 
   return (
@@ -66,11 +67,11 @@ export default async function OrgHomePage({ params }: Props) {
       <div className="relative h-[280px] w-full bg-slate-900 text-white overflow-hidden">
         {/* 배경 이미지 (public/campus-bg.jpg 파일 필요, 없으면 색상만 나옴) */}
         <div
-          className="absolute inset-0 bg-cover bg-center opacity-50 transition-transform hover:scale-105 duration-700"
-          style={{ backgroundImage: "url('/campus-bg.jpg')" }}
+          className="absolute inset-0 bg-cover bg-center opacity-60 transition-transform hover:scale-105 duration-700"
+          style={{ backgroundImage: "url('/main_bg.webp')" }}
         />
         {/* 그라데이션 오버레이 */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/60" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-transparent to-black-20" />
 
         {/* 메인 텍스트 */}
         <div className="absolute bottom-20 z-10 px-6 pt-4">
@@ -106,7 +107,7 @@ export default async function OrgHomePage({ params }: Props) {
                 href={menu.href}
                 className="flex flex-col items-center gap-2 group cursor-pointer"
               >
-                <div className="p-2.5 rounded-full bg-white/10 group-hover:bg-white/20 transition-all group-active:scale-95">
+                <div className="p-2.5 rounded-full bg-white/20 group-hover:bg-white/20 transition-all group-active:scale-95">
                   <menu.icon className="w-6 h-6 text-white" strokeWidth={1.5} />
                 </div>
                 <span className="text-xs font-medium text-white/90 group-hover:text-white">
@@ -173,9 +174,12 @@ export default async function OrgHomePage({ params }: Props) {
 
       {/* 4. 하단 홍보 배너 (선택사항) */}
       <div className="mt-6 px-4">
-        <div className="w-full h-24 bg-slate-200 rounded-xl flex items-center justify-center text-slate-400 text-sm">
-          광고 / 홍보 배너 영역
-        </div>
+        <a href="https://forest119.com/shop/">
+          <div
+            className="w-full h-40 bg-slate-200 rounded-xl flex items-center justify-center text-slate-400 text-sm bg-cover bg-center"
+            style={{ backgroundImage: "url('/banner/main_banner.png')" }}
+          ></div>
+        </a>
       </div>
     </div>
   );
