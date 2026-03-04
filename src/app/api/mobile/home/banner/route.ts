@@ -19,13 +19,14 @@ export async function GET(req: Request) {
       );
     }
     const memberId = Number(decoded.sub);
-
-    // 2. 파라미터 확인 및 동적 targetOrgId 설정
+    console.log(memberId);
+    // // 2. 파라미터 확인 및 동적 targetOrgId 설정
     const { searchParams } = new URL(req.url);
     let targetOrgId = searchParams.get("orgId")
       ? Number(searchParams.get("orgId"))
       : null;
-
+    console.log(targetOrgId);
+    console.log(!targetOrgId);
     // 파라미터가 없으면 유저의 '대표 소속(isPrimary)'을 찾습니다.
     if (!targetOrgId) {
       const primaryAffiliation = await prisma.affiliation.findFirst({
@@ -37,13 +38,19 @@ export async function GET(req: Request) {
         select: { organizationId: true },
       });
 
+      console.log(primaryAffiliation);
       // 대표 소속이 있으면 해당 ID를, 없으면 null(공통 배너만 조회)을 유지합니다.
       if (primaryAffiliation) {
         targetOrgId = primaryAffiliation.organizationId;
       }
     }
 
+    console.log(targetOrgId);
+
     const now = new Date();
+
+    console.log("현재 서버 시간:", now.toISOString());
+    console.log("찾으려는 단체 ID:", targetOrgId);
 
     // 3. 배너 조회
     const banners = await prisma.banner.findMany({
