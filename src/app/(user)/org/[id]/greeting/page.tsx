@@ -36,6 +36,8 @@ export default async function UserGreetingPage({
     include: {
       affiliation: {
         include: {
+          organization: { select: { name: true } },
+          generation: { select: { name: true } },
           member: { select: { name: true } },
           Position: { select: { name: true } },
         },
@@ -54,20 +56,11 @@ export default async function UserGreetingPage({
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-12 space-y-16">
-      {/* 상단 타이틀 영역 */}
-      <div className="text-center space-y-4 mb-12">
-        <h1 className="text-3xl md:text-4xl font-black text-slate-900 tracking-tight">
-          인사말
-        </h1>
-        {/* <p className="text-slate-500 font-medium">
-          {generations.find((g) => g.id === currentGenId)?.name} 임원진을
-          소개합니다.
-        </p> */}
-      </div>
-
       {/* 인사말 카드 리스트 */}
       <div className="space-y-16">
         {greetings.map((greet, index) => {
+          const generateName = greet.affiliation.generation?.name;
+          const organizationName = greet.affiliation.organization?.name;
           const positionName = greet.affiliation.Position?.name || "임원";
           const memberName = greet.affiliation.member.name;
 
@@ -78,7 +71,7 @@ export default async function UserGreetingPage({
             >
               {/* 1. 좌측: 프로필 이미지 영역 */}
               <div className="w-full md:w-1/3 shrink-0 flex flex-col items-center md:items-start">
-                <div className="w-48 h-48 md:w-64 md:h-64 relative rounded-2xl overflow-hidden shadow-lg border border-slate-100 bg-slate-50">
+                <div className="w-48 md:w-64 relative rounded-xl overflow-hidden">
                   {greet.imageUrl ? (
                     <img
                       src={greet.imageUrl}
@@ -94,11 +87,9 @@ export default async function UserGreetingPage({
 
                 {/* 모바일에서만 사진 밑에 바로 이름 띄우기 */}
                 <div className="mt-4 text-center md:hidden w-full">
-                  <p className="text-sm font-bold text-blue-600 mb-1">
-                    {positionName}
-                  </p>
+                  <p className="text-sm font-bold text-blue-600 mb-1"></p>
                   <p className="text-xl font-black text-slate-900">
-                    {memberName}
+                    {generateName} {positionName} {memberName}
                   </p>
                 </div>
               </div>
@@ -128,25 +119,24 @@ export default async function UserGreetingPage({
                 </div>
 
                 {/* 서명/직인 영역 */}
-                <div className="mt-12 flex justify-end items-center gap-4">
-                  <div className="text-right">
-                    <p className="text-sm text-slate-500 mb-1">
-                      {positionName}
-                    </p>
-                    <p className="text-lg font-bold text-slate-900">
-                      {memberName}
-                    </p>
-                  </div>
-
-                  {greet.signImageUrl && (
-                    <div className="w-20 h-20 relative shrink-0">
-                      <img
-                        src={greet.signImageUrl}
-                        alt={`${memberName} 서명`}
-                        className="w-full h-full object-contain" // 서명은 잘리지 않게 contain
-                      />
+                <div className="mt-12 flex gap-4">
+                  <div className="">
+                    <div className="text-lg font-bold text-slate-900 flex gap-1.5 items-center">
+                      <span>{organizationName}</span>
+                      <span>{generateName}</span>
+                      <span>{positionName}</span>
+                      <span>{memberName}</span>
+                      {greet.signImageUrl && (
+                        <div className="w-20 h-20 relative shrink-0 -ml-5">
+                          <img
+                            src={greet.signImageUrl}
+                            alt={`${memberName} 서명`}
+                            className="w-full h-full object-contain" // 서명은 잘리지 않게 contain
+                          />
+                        </div>
+                      )}
                     </div>
-                  )}
+                  </div>
                 </div>
               </div>
             </section>

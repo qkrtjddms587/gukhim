@@ -19,6 +19,7 @@ model Organization {
 
   deletedAt DateTime?
   Post      Post[]
+  Banner    Banner[]
 }
 
 // 2. 기수 (2뎁스)
@@ -244,4 +245,29 @@ model DevicePushToken {
 
   @@unique([platform, token])
   @@index([memberId])
+}
+
+model Banner {
+  id       Int     @id @default(autoincrement())
+  title    String? // 관리용 배너 제목 (예: "2026년 상반기 모집 배너")
+  imageUrl String // 배너 이미지 URL
+  linkUrl  String? // 배너 클릭 시 이동할 링크 (없으면 이미지만 노출)
+
+  // 노출 대상 설정 (null이면 앱 전체 공통 배너, 값이 있으면 해당 단체 전용 배너)
+  organizationId Int?
+  organization   Organization? @relation(fields: [organizationId], references: [id])
+
+  // 노출 상태 및 정렬
+  isActive     Boolean @default(true) // 강제 노출/숨김 스위치
+  displayOrder Int     @default(0) // 정렬 순서 (숫자가 작을수록 우선 노출 등 규칙 지정)
+
+  // 예약 노출 기능 (이 기간에만 노출되도록)
+  startDate DateTime? // 노출 시작 일시
+  endDate   DateTime? // 노출 종료 일시
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([organizationId])
+  @@index([isActive])
 }

@@ -17,7 +17,7 @@ export const metadata: Metadata = {
   title: "청년정치연수원",
   description: "청년정치연수원 회원용 어플리케이션입니다.",
   icons: {
-    icon: "/favicon.webp",
+    icon: "/favicon.png",
   },
 };
 
