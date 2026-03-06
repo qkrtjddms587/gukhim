@@ -173,11 +173,11 @@ export default async function CommunityPage({
       </div>
 
       {/* 4. 플로팅 글쓰기 버튼 */}
-      <Link href={`/org/${orgId}/community/write`}>
+      {/* <Link href={`/m/org/${orgId}/community/write`}>
         <button className="fixed bottom-6 right-4 bg-red-600 text-white p-4 rounded-full shadow-lg hover:bg-red-700 transition-transform active:scale-95 flex items-center justify-center">
           <PenSquare className="w-6 h-6" />
         </button>
-      </Link>
+      </Link> */}
     </div>
   );
 }

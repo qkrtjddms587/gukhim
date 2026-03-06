@@ -5,8 +5,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { EditProfileDialog } from "./edit-profile-dialog"; // 👈 추가
-import { Button } from "@/components/ui/button";
-import { LogOut } from "lucide-react";
 
 export default async function ProfilePage() {
   const session = await auth();
