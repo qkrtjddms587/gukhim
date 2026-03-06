@@ -29,6 +29,14 @@ export async function getMembersAction({
   const whereCondition = {
     organizationId: orgId,
     status: "ACTIVE" as const,
+
+    // 🌟 핵심 추가: 연결된 member의 이름이 '최고관리자'가 아닌 것만 필터링!
+    member: {
+      name: {
+        not: "최고관리자",
+      },
+    },
+
     OR: query
       ? [
           { member: { name: { contains: query } } },
@@ -51,13 +59,11 @@ export async function getMembersAction({
     orderBy: { generation: { name: "desc" } },
   });
 
-  // 다음 페이지가 있는지 계산 (가져온 개수가 Limit과 같으면 다음 페이지가 있다고 가정)
   const nextId = members.length === ITEMS_PER_PAGE ? page + 1 : null;
 
-  // React Query가 사용할 수 있는 객체 형태로 반환
   return {
     data: members,
-    nextId, // 다음 페이지 번호 (없으면 null)
+    nextId,
   };
 }
 
