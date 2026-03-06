@@ -12,9 +12,10 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { CreateBannerDialog } from "./create-banner-dialog";
+// 🌟 새로 만들 수정용 다이얼로그 임포트
+import { EditBannerDialog } from "./edit-banner-dialog";
 
 interface Props {
-  // 폴더명이 [id]인지 [orgId]인지에 따라 맞춰주세요!
   params: Promise<{ orgId: string }>;
 }
 
@@ -41,7 +42,6 @@ export default async function OrgBannersPage({ params }: Props) {
 
   return (
     <div>
-      {/* 🌟 다른 페이지와 완벽히 동일한 타이틀 톤 앤 매너 */}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-6">
         <div>
           <h2 className="text-xl font-bold mb-2">배너 관리</h2>
@@ -50,14 +50,11 @@ export default async function OrgBannersPage({ params }: Props) {
             관리하세요.
           </p>
         </div>
-
-        {/* 버튼을 제목 우측(모바일은 하단)에 나란히 배치 */}
         <div>
           <CreateBannerDialog orgId={orgId} />
         </div>
       </div>
 
-      {/* 테이블 영역만 흰색 박스(Card)로 묶어서 깔끔하게 표시 */}
       <Card className="border-none shadow-sm overflow-hidden bg-white">
         <CardContent className="p-0">
           <div className="overflow-auto max-h-[calc(100vh-250px)] relative [&>div]:max-h-[calc(100vh-250px)] [&>div]:overflow-auto">
@@ -67,13 +64,15 @@ export default async function OrgBannersPage({ params }: Props) {
                   <TableHead className="pl-6">미리보기 및 제목</TableHead>
                   <TableHead className="w-[200px]">노출 기간</TableHead>
                   <TableHead className="w-[100px]">상태</TableHead>
+                  {/* 🌟 관리(수정) 버튼을 위한 열 추가 */}
+                  <TableHead className="w-[80px] text-center">관리</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {banners.length === 0 ? (
                   <TableRow>
                     <TableCell
-                      colSpan={3}
+                      colSpan={4}
                       className="py-20 text-center text-slate-400"
                     >
                       등록된 배너가 없습니다.
@@ -84,7 +83,7 @@ export default async function OrgBannersPage({ params }: Props) {
                     <TableRow key={banner.id}>
                       <TableCell className="pl-6">
                         <div className="flex items-center gap-4">
-                          <div className="w-24 h-12 rounded bg-slate-100 overflow-hidden shrink-0 border border-slate-200">
+                          <div className="w-24 h-12 rounded bg-slate-100 overflow-hidden shrink-0 border border-slate-200 relative">
                             {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img
                               src={banner.imageUrl}
@@ -97,8 +96,8 @@ export default async function OrgBannersPage({ params }: Props) {
                               {banner.title || "제목 없음"}
                             </span>
                             {banner.linkUrl && (
-                              <span className="text-xs text-blue-500 hover:underline cursor-pointer mt-0.5">
-                                링크 연결됨
+                              <span className="text-xs text-blue-500 mt-0.5 truncate max-w-[200px]">
+                                {banner.linkUrl}
                               </span>
                             )}
                           </div>
@@ -128,7 +127,7 @@ export default async function OrgBannersPage({ params }: Props) {
 
                       <TableCell>
                         {banner.isActive ? (
-                          <Badge className="bg-green-100 text-green-700 hover:bg-green-100 border-none">
+                          <Badge className="bg-green-100 text-green-700 border-none">
                             활성
                           </Badge>
                         ) : (
@@ -139,6 +138,11 @@ export default async function OrgBannersPage({ params }: Props) {
                             숨김
                           </Badge>
                         )}
+                      </TableCell>
+
+                      {/* 🌟 수정 버튼 렌더링 (배너 데이터를 프롭스로 전달) */}
+                      <TableCell className="text-center">
+                        <EditBannerDialog banner={banner} orgId={orgId} />
                       </TableCell>
                     </TableRow>
                   ))
