@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { createPostAction } from "@/actions/post-actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,10 +13,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { BackButton } from "@/components/common/back-button";
-import { ImagePlus, X, Loader2 } from "lucide-react";
+import { Link as LinkIcon, X, Loader2, Plus } from "lucide-react";
 
-// 🌟 마법의 변수: 나중에 다중 업로드로 바꾸고 싶다면 이 숫자만 3, 5, 10 등으로 바꾸시면 됩니다!
-const MAX_IMAGES = 1;
+// 🌟 최대 입력 가능한 URL 개수 설정
+const MAX_IMAGES = 5;
 
 interface WriteFormProps {
   orgId: number;
@@ -26,43 +26,36 @@ interface WriteFormProps {
 export function WriteForm({ orgId, isAdmin }: WriteFormProps) {
   const [isPending, setIsPending] = useState(false);
 
-  // MAX_IMAGES에 대응하기 위해 상태를 다시 배열로 관리합니다.
-  const [images, setImages] = useState<File[]>([]);
-  const [previews, setPreviews] = useState<string[]>([]);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  // 🌟 여러 개의 URL을 담을 배열 상태와, 현재 입력 중인 URL 상태를 나눕니다.
+  const [imageUrls, setImageUrls] = useState<string[]>([]);
+  const [currentUrl, setCurrentUrl] = useState("");
 
-  // 이미지 선택 핸들러
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []);
-    if (files.length === 0) return;
+  // URL 추가 핸들러
+  const handleAddUrl = () => {
+    if (!currentUrl.trim()) return; // 빈 값이면 무시
 
-    // 🌟 1. 남은 등록 가능 갯수 계산
-    const availableSpace = MAX_IMAGES - images.length;
-
-    // 선택한 파일이 허용치보다 많으면 잘라냅니다.
-    const filesToAdd = files.slice(0, availableSpace);
-
-    if (files.length > availableSpace) {
-      alert(`이미지는 최대 ${MAX_IMAGES}장까지만 첨부할 수 있습니다.`);
+    if (imageUrls.length >= MAX_IMAGES) {
+      alert(`이미지는 최대 ${MAX_IMAGES}장까지만 추가할 수 있습니다.`);
+      return;
     }
 
-    setImages((prev) => [...prev, ...filesToAdd]);
-
-    // 미리보기 URL 생성
-    const newPreviews = filesToAdd.map((file) => URL.createObjectURL(file));
-    setPreviews((prev) => [...prev, ...newPreviews]);
-
-    // 같은 파일 다시 선택할 수 있도록 input 초기화
-    if (fileInputRef.current) fileInputRef.current.value = "";
+    setImageUrls((prev) => [...prev, currentUrl]);
+    setCurrentUrl(""); // 입력창 비우기
   };
 
-  // 이미지 삭제 핸들러
-  const handleRemoveImage = (indexToRemove: number) => {
-    setImages((prev) => prev.filter((_, idx) => idx !== indexToRemove));
-    setPreviews((prev) => prev.filter((_, idx) => idx !== indexToRemove));
+  // URL 삭제 핸들러
+  const handleRemoveUrl = (indexToRemove: number) => {
+    setImageUrls((prev) => prev.filter((_, idx) => idx !== indexToRemove));
   };
 
-  // 폼 제출 핸들러
+  // 엔터 키를 누르면 폼이 제출되지 않고 URL만 추가되도록 방어
+  const handleInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      handleAddUrl();
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsPending(true);
@@ -70,9 +63,9 @@ export function WriteForm({ orgId, isAdmin }: WriteFormProps) {
     try {
       const formData = new FormData(e.currentTarget);
 
-      // 🌟 2. 이미지가 몇 장이든 일관되게 'images' 라는 키값으로 배열처럼 전송
-      images.forEach((image) => {
-        formData.append("images", image);
+      // 🌟 배열에 모인 URL들을 'imageUrls'라는 동일한 키값으로 FormData에 집어넣습니다.
+      imageUrls.forEach((url) => {
+        formData.append("imageUrls", url);
       });
 
       await createPostAction(formData, orgId);
@@ -116,46 +109,57 @@ export function WriteForm({ orgId, isAdmin }: WriteFormProps) {
         className="min-h-[300px] resize-none text-base leading-relaxed p-4"
       />
 
-      {/* 이미지 업로드 영역 */}
-      <div className="space-y-4 pt-2">
-        {/* 숨겨진 파일 입력창 (MAX_IMAGES가 1보다 크면 자동으로 multiple 속성 부여) */}
-        <input
-          type="file"
-          ref={fileInputRef}
-          onChange={handleImageChange}
-          accept="image/*"
-          multiple={MAX_IMAGES > 1}
-          className="hidden"
-        />
+      {/* 🌟 다중 이미지 URL 입력 영역 */}
+      <div className="space-y-4 pt-2 border-t">
+        <div className="flex items-center justify-between">
+          <span className="text-sm font-bold text-slate-700">
+            이미지 첨부 ({imageUrls.length}/{MAX_IMAGES})
+          </span>
+        </div>
 
-        {/* 🌟 3. 현재 등록된 이미지가 MAX_IMAGES보다 적을 때만 첨부 버튼 노출 */}
-        {images.length < MAX_IMAGES && (
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => fileInputRef.current?.click()}
-            className="flex items-center gap-2"
-          >
-            <ImagePlus className="w-4 h-4" />
-            사진 첨부 {MAX_IMAGES > 1 ? `(${images.length}/${MAX_IMAGES})` : ""}
-          </Button>
+        {/* URL 입력창과 추가 버튼 */}
+        {imageUrls.length < MAX_IMAGES && (
+          <div className="flex gap-2">
+            <div className="relative flex-1">
+              <LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <Input
+                value={currentUrl}
+                onChange={(e) => setCurrentUrl(e.target.value)}
+                onKeyDown={handleInputKeyDown}
+                placeholder="이미지 URL을 입력하고 추가 버튼을 누르세요"
+                className="pl-9 bg-slate-50"
+              />
+            </div>
+            <Button
+              type="button"
+              onClick={handleAddUrl}
+              variant="secondary"
+              className="shrink-0"
+            >
+              <Plus className="w-4 h-4 mr-1" /> 추가
+            </Button>
+          </div>
         )}
 
-        {/* 미리보기 영역 */}
-        {previews.length > 0 && (
-          <div className="flex flex-wrap gap-3 mt-2">
-            {previews.map((preview, idx) => (
-              <div key={idx} className="relative inline-block">
-                <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-md overflow-hidden border border-slate-200">
+        {/* 추가된 이미지 미리보기 목록 */}
+        {imageUrls.length > 0 && (
+          <div className="flex flex-wrap gap-3 mt-4">
+            {imageUrls.map((url, idx) => (
+              <div key={idx} className="relative inline-block group">
+                <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-md overflow-hidden border border-slate-200 bg-slate-100 flex items-center justify-center">
                   <img
-                    src={preview}
-                    alt={`Preview ${idx + 1}`}
+                    src={url}
+                    alt={`미리보기 ${idx + 1}`}
                     className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.currentTarget.src =
+                        "https://via.placeholder.com/150?text=Invalid+URL";
+                    }}
                   />
                 </div>
                 <button
                   type="button"
-                  onClick={() => handleRemoveImage(idx)}
+                  onClick={() => handleRemoveUrl(idx)}
                   className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1.5 shadow-sm hover:bg-red-600 transition"
                   aria-label="이미지 삭제"
                 >
@@ -167,7 +171,7 @@ export function WriteForm({ orgId, isAdmin }: WriteFormProps) {
         )}
       </div>
 
-      <div className="flex gap-2 justify-end pt-4 border-t">
+      <div className="flex gap-2 justify-end pt-4 border-t mt-8">
         <BackButton />
         <Button
           type="submit"
