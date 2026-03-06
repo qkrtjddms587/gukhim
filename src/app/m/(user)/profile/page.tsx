@@ -24,7 +24,7 @@ export default async function ProfilePage() {
   if (!member) return null;
 
   return (
-    <div className="p-4 space-y-6">
+    <div className="p-4 pb-14 space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">내 정보</h1>
         {/* 👇 수정 버튼 (Dialog) */}
@@ -111,7 +111,7 @@ export default async function ProfilePage() {
           </div>
         </CardContent>
       </Card>
-      <div className="pt-4">
+      {/* <div className="pt-4">
         <form
           action={async () => {
             "use server";
@@ -123,7 +123,7 @@ export default async function ProfilePage() {
             로그아웃
           </Button>
         </form>
-      </div>
+      </div> */}
     </div>
   );
 }

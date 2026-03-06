@@ -61,6 +61,10 @@ export async function GET(req: Request) {
         author: {
           select: { name: true, image: true },
         },
+        images: {
+          select: { url: true },
+          take: 1, // 목록에서는 성능을 위해 최대 5개까지만 가져오도록 제한 가능
+        },
         _count: {
           select: { comments: true },
         },
@@ -80,6 +84,7 @@ export async function GET(req: Request) {
       authorName: post.author.name,
       authorImage: post.author.image,
       commentCount: post._count.comments,
+      thumbnail: post.images[0]?.url || null,
     }));
 
     return NextResponse.json({ success: true, data: formattedPosts });
