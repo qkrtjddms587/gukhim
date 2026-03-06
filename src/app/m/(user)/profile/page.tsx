@@ -24,7 +24,7 @@ export default async function ProfilePage() {
   if (!member) return null;
 
   return (
-    <div className="p-4 pb-14 space-y-6">
+    <div className="p-4 space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">내 정보</h1>
         {/* 👇 수정 버튼 (Dialog) */}

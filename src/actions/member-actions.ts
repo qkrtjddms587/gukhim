@@ -322,3 +322,26 @@ export async function bulkDeleteMembersAction(memberIds: number[]) {
     return { success: false, error: "일괄 삭제 중 서버 오류가 발생했습니다." };
   }
 }
+
+export async function bulkApproveMembersAction(memberIds: number[]) {
+  try {
+    // 🌟 선택된 회원의 소속(Affiliation) 상태 중 'PENDING'인 것을 'ACTIVE'로 모두 업데이트
+    await prisma.affiliation.updateMany({
+      where: {
+        memberId: { in: memberIds },
+        status: "PENDING",
+      },
+      data: {
+        status: "ACTIVE",
+      },
+    });
+
+    // 경로 캐시 날리기 (목록 새로고침 용도)
+    revalidatePath("/admin/members"); // 💡 실제 사용하시는 경로에 맞게 수정하세요.
+
+    return { success: true };
+  } catch (error) {
+    console.error("[BULK_APPROVE_ERROR]", error);
+    return { success: false, error: "일괄 승인 처리 중 오류가 발생했습니다." };
+  }
+}

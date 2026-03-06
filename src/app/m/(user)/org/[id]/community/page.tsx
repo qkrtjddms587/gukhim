@@ -106,7 +106,7 @@ export default async function CommunityPage({
                 return (
                   <Link
                     key={post.id}
-                    href={`/org/${orgId}/community/${post.id}`}
+                    href={`/m/org/${orgId}/community/${post.id}`}
                     className="p-3 border border-gray-200 rounded-xl bg-white shadow-sm flex gap-4"
                   >
                     {/* 썸네일 (왼쪽) */}
@@ -147,7 +147,7 @@ export default async function CommunityPage({
               return (
                 <Link
                   key={post.id}
-                  href={`/org/${orgId}/community/${post.id}`}
+                  href={`/m/org/${orgId}/community/${post.id}`}
                   className="py-4 border-b border-gray-200 block hover:bg-slate-50 transition-colors"
                 >
                   <h3 className="text-[17px] font-bold text-slate-900 mb-2 leading-snug break-words">
