@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,12 +12,11 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
-import { ImagePlus, Loader2, Edit2, Trash2 } from "lucide-react";
+import { Loader2, Edit2, Trash2, ImageIcon } from "lucide-react";
 import {
   deleteBannerAction,
   updateBannerAction,
 } from "@/actions/banner-actions";
-// 🌟 서버 액션 경로 확인 필수! (수정 및 삭제 액션)
 
 interface BannerProps {
   id: number;
@@ -40,27 +39,18 @@ export function EditBannerDialog({ banner, orgId }: EditBannerDialogProps) {
   const [isPending, setIsPending] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // 상태 관리: 활성 여부 및 이미지 미리보기
+  // 상태 관리
   const [isActive, setIsActive] = useState(banner.isActive);
-  const [image, setImage] = useState<File | null>(null);
-  // 처음엔 기존 이미지 URL을 보여줍니다.
-  const [preview, setPreview] = useState<string>(banner.imageUrl);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [imageUrl, setImageUrl] = useState<string>(banner.imageUrl);
 
-  // 날짜 포맷팅 헬퍼 (HTML input type="datetime-local" 용도)
+  // 날짜 포맷팅 (서버 액션의 new Date()가 인식 가능한 포맷)
   const formatDateForInput = (date: Date | null) => {
     if (!date) return "";
-    return new Date(date.getTime() - date.getTimezoneOffset() * 60000)
+    // UTC 시간을 로컬 datetime-local 포맷으로 변환
+    const d = new Date(date);
+    return new Date(d.getTime() - d.getTimezoneOffset() * 60000)
       .toISOString()
       .slice(0, 16);
-  };
-
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setImage(file);
-    setPreview(URL.createObjectURL(file));
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -69,19 +59,25 @@ export function EditBannerDialog({ banner, orgId }: EditBannerDialogProps) {
 
     try {
       const formData = new FormData(e.currentTarget);
-      formData.append("bannerId", banner.id.toString());
+
+      // 스위치 컴포넌트는 폼 데이터에 자동으로 담기지 않으므로 수동 추가
+      // 서버 액션의 (isActiveValue === "true") 로직과 매칭됨
       formData.append("isActive", isActive.toString());
 
-      // 새 이미지를 선택한 경우에만 폼 데이터에 추가
-      if (image) {
-        formData.append("image", image);
-      }
+      // 배너 ID 및 이미지 URL 명시적 추가
+      formData.append("bannerId", banner.id.toString());
+      formData.append("imageUrl", imageUrl);
 
-      await updateBannerAction(formData);
-      setIsOpen(false);
+      const result = await updateBannerAction(formData);
+
+      if (result.success) {
+        setIsOpen(false);
+      } else {
+        alert(result.error || "수정 중 오류가 발생했습니다.");
+      }
     } catch (error) {
       console.error(error);
-      alert("배너 수정에 실패했습니다.");
+      alert("서버와 통신 중 오류가 발생했습니다.");
     } finally {
       setIsPending(false);
     }
@@ -89,14 +85,17 @@ export function EditBannerDialog({ banner, orgId }: EditBannerDialogProps) {
 
   const handleDelete = async () => {
     if (!confirm("정말 이 배너를 삭제하시겠습니까?")) return;
-
     setIsDeleting(true);
     try {
-      await deleteBannerAction(banner.id);
-      setIsOpen(false);
+      const result = await deleteBannerAction(banner.id);
+      if (result.success) {
+        setIsOpen(false);
+      } else {
+        alert(result.error || "삭제 실패");
+      }
     } catch (error) {
       console.error(error);
-      alert("배너 삭제에 실패했습니다.");
+      alert("삭제 중 오류가 발생했습니다.");
     } finally {
       setIsDeleting(false);
     }
@@ -104,7 +103,6 @@ export function EditBannerDialog({ banner, orgId }: EditBannerDialogProps) {
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      {/* 🌟 테이블 셀 안의 아이콘 버튼 */}
       <DialogTrigger asChild>
         <Button
           variant="ghost"
@@ -121,41 +119,51 @@ export function EditBannerDialog({ banner, orgId }: EditBannerDialogProps) {
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6 py-4">
-          {/* 상태 스위치 */}
+          {/* 🌟 서버 액션에 필요한 Hidden 필드 보강 */}
+          <input type="hidden" name="organizationId" value={orgId} />
+          <input
+            type="hidden"
+            name="displayOrder"
+            value={banner.displayOrder}
+          />
+
           <div className="flex items-center justify-between">
             <Label className="text-base font-medium">배너 활성화</Label>
             <Switch checked={isActive} onCheckedChange={setIsActive} />
           </div>
 
           <div className="space-y-4">
-            {/* 이미지 (필수 아님: 변경 안하면 기존 유지) */}
+            {/* 이미지 URL 입력 및 실시간 미리보기 */}
             <div className="space-y-2">
-              <Label>배너 이미지 (변경 시 선택)</Label>
-              <input
-                type="file"
-                ref={fileInputRef}
-                onChange={handleImageChange}
-                accept="image/*"
-                className="hidden"
+              <Label>이미지 URL</Label>
+              <Input
+                value={imageUrl}
+                onChange={(e) => setImageUrl(e.target.value)}
+                placeholder="https://example.com/image.jpg"
+                required
               />
-              <div
-                className="w-full h-32 rounded-md border-2 border-dashed border-slate-300 flex flex-col items-center justify-center cursor-pointer overflow-hidden relative group"
-                onClick={() => fileInputRef.current?.click()}
-              >
-                <img
-                  src={preview}
-                  alt="Preview"
-                  className="w-full h-full object-cover"
-                />
-                <div className="absolute inset-0 bg-black/40 hidden group-hover:flex items-center justify-center transition-all">
-                  <p className="text-white text-sm font-medium flex items-center gap-2">
-                    <ImagePlus className="w-4 h-4" /> 이미지 변경
-                  </p>
-                </div>
+              <div className="mt-2 w-full h-32 rounded-md border bg-slate-50 flex items-center justify-center overflow-hidden border-dashed">
+                {imageUrl ? (
+                  <img
+                    src={imageUrl}
+                    alt="Preview"
+                    className="w-full h-full object-contain"
+                    onError={(e) => {
+                      e.currentTarget.src = ""; // 이미지 로드 실패 시 초기화
+                      e.currentTarget.style.display = "none";
+                    }}
+                  />
+                ) : (
+                  <div className="flex flex-col items-center text-slate-400">
+                    <ImageIcon className="w-8 h-8 mb-1" />
+                    <span className="text-xs">
+                      올바른 이미지 URL을 입력하세요
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
 
-            {/* 제목 */}
             <div className="space-y-2">
               <Label>
                 제목{" "}
@@ -166,11 +174,10 @@ export function EditBannerDialog({ banner, orgId }: EditBannerDialogProps) {
               <Input
                 name="title"
                 defaultValue={banner.title || ""}
-                placeholder="예: 2026년 상반기 모집"
+                placeholder="배너 제목"
               />
             </div>
 
-            {/* 연결 링크 */}
             <div className="space-y-2">
               <Label>
                 연결 링크{" "}
@@ -185,15 +192,9 @@ export function EditBannerDialog({ banner, orgId }: EditBannerDialogProps) {
               />
             </div>
 
-            {/* 노출 기간 */}
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>
-                  시작 일시{" "}
-                  <span className="text-slate-400 text-xs font-normal">
-                    (선택)
-                  </span>
-                </Label>
+                <Label>시작 일시</Label>
                 <Input
                   type="datetime-local"
                   name="startDate"
@@ -201,12 +202,7 @@ export function EditBannerDialog({ banner, orgId }: EditBannerDialogProps) {
                 />
               </div>
               <div className="space-y-2">
-                <Label>
-                  종료 일시{" "}
-                  <span className="text-slate-400 text-xs font-normal">
-                    (선택)
-                  </span>
-                </Label>
+                <Label>종료 일시</Label>
                 <Input
                   type="datetime-local"
                   name="endDate"
@@ -217,7 +213,6 @@ export function EditBannerDialog({ banner, orgId }: EditBannerDialogProps) {
           </div>
 
           <div className="flex gap-2 justify-between pt-4 border-t">
-            {/* 삭제 버튼 추가 */}
             <Button
               type="button"
               variant="destructive"
@@ -245,10 +240,8 @@ export function EditBannerDialog({ banner, orgId }: EditBannerDialogProps) {
                 className="bg-brand-main"
                 disabled={isPending || isDeleting}
               >
-                {isPending ? (
-                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                ) : null}
-                저장
+                {isPending && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+                저장하기
               </Button>
             </div>
           </div>
