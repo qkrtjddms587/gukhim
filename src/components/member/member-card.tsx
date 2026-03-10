@@ -32,7 +32,8 @@ export function MemberCard({
   viewerRole = "USER", // 기본값은 일반 유저
 }: MemberProps) {
   // ✅ 권한 체크: 매니저 이상인지 확인
-  const isManagerOrHigher = viewerRole === "ADMIN" || viewerRole === "MANAGER";
+  const isManagerOrHigher =
+    viewerRole === "ADMIN" || viewerRole === "MANAGER" || viewerRole === "USER";
 
   // ✅ 전화번호 마스킹 함수 (010-1234-5678 -> 010-****-5678)
   const formatPhone = (phoneStr: string) => {
