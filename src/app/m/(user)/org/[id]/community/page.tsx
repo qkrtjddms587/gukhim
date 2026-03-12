@@ -8,7 +8,7 @@ import { format } from "date-fns";
 const TABS = [
   { label: "공지사항", value: "NOTICE" },
   { label: "갤러리", value: "GALLERY" },
-  { label: "우리 동네 홍보", value: "ADS" },
+  { label: "우리 기수 홍보", value: "ADS" },
   { label: "행사일정", value: "EVENT" },
 ];
 
@@ -88,7 +88,7 @@ export default async function CommunityPage({
         {/* 🌟 갤러리일 때는 카드 간격(gap-4)을 주고, 아닐 때는 붙여서(border-b로 구분) 렌더링 */}
         <div
           className={`flex flex-col ${
-            currentType === "GALLERY" ? "gap-4" : ""
+            currentType === "GALLERY" ? "gap-2" : ""
           }`}
         >
           {posts.length === 0 ? (
@@ -113,7 +113,7 @@ export default async function CommunityPage({
                     <div className="shrink-0 w-24 h-24 bg-gray-200 rounded-md overflow-hidden">
                       {post.images?.[0] ? (
                         <img
-                          src={post.images[0].url}
+                          src={`${process.env.NEXT_PUBLIC_S3_DOMAIN}/${process.env.NEXT_PUBLIC_S3_BUCKET}${post.images[0].url}`}
                           alt="썸네일"
                           className="w-full h-full object-cover"
                         />
@@ -173,11 +173,11 @@ export default async function CommunityPage({
       </div>
 
       {/* 4. 플로팅 글쓰기 버튼 */}
-      {/* <Link href={`/m/org/${orgId}/community/write`}>
-        <button className="fixed bottom-6 right-4 bg-red-600 text-white p-4 rounded-full shadow-lg hover:bg-red-700 transition-transform active:scale-95 flex items-center justify-center">
+      <Link href={`/m/org/${orgId}/community/write`}>
+        <button className="fixed bottom-24 right-4 bg-red-600 text-white p-4 rounded-full shadow-lg hover:bg-red-700 transition-transform active:scale-95 flex items-center justify-center">
           <PenSquare className="w-6 h-6" />
         </button>
-      </Link> */}
+      </Link>
     </div>
   );
 }

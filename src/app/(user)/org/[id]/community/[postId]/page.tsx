@@ -6,6 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Eye, Clock } from "lucide-react";
 import { CommentSection } from "@/components/community/comment-section";
 import { auth } from "@/auth";
+import { isOrgAdmin } from "@/lib/auth/auth-utils";
 
 export default async function PostDetailPage({
   params,

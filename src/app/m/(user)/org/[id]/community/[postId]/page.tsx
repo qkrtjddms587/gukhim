@@ -1,12 +1,17 @@
+// src/app/.../page.tsx (상세 페이지 경로에 맞게)
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Eye, Clock, ChevronLeft } from "lucide-react"; // 🌟 ChevronLeft 추가
+import { Eye, Clock, ChevronLeft, Pencil } from "lucide-react";
 import { CommentSection } from "@/components/community/comment-section";
 import { auth } from "@/auth";
-import Link from "next/link"; // 🌟 Link 컴포넌트 추가
+import Link from "next/link";
+import { ImageSlider } from "@/components/community/image-slider"; // 🌟 슬라이더 컴포넌트 임포트
+import { DeletePostButton } from "@/components/community/delete-post-button";
+import { isContentOwner, isOrgAdmin } from "@/lib/auth/auth-utils";
+import { PostOptionsMenu } from "@/components/community/post-options-menu";
 
 export default async function PostDetailPage({
   params,
@@ -14,15 +19,17 @@ export default async function PostDetailPage({
   params: Promise<{ id: string; postId: string }>;
 }) {
   const { id, postId } = await params;
+  const orgId = +id;
   const session = await auth();
 
-  // 1. 게시글 가져오기
+  // 1. 게시글 가져오기 (대표님 스키마 적용!)
   const post = await prisma.post.findUnique({
     where: { id: Number(postId) },
     include: {
       author: {
         select: { name: true, image: true, company: true, job: true },
       },
+      images: true, // 🌟 DB의 PostImage[] 데이터를 모두 가져옵니다.
       comments: {
         include: { member: { select: { name: true, image: true } } },
         orderBy: { createdAt: "asc" },
@@ -32,6 +39,10 @@ export default async function PostDetailPage({
 
   if (!post) notFound();
 
+  const isAdmin = isOrgAdmin(session?.user, orgId);
+  const isOwner = isContentOwner(session?.user, post.authorId);
+  const canDelete = isOwner || isAdmin;
+  const canEdit = isOwner;
   // 조회수 증가
   await prisma.post.update({
     where: { id: post.id },
@@ -40,7 +51,7 @@ export default async function PostDetailPage({
 
   return (
     <div className="max-w-3xl mx-auto p-4 md:p-8 min-h-screen bg-white shadow-sm md:my-6 md:rounded-xl md:border relative">
-      {/* 🌟 추가된 부분: 목록으로 돌아가기 버튼 */}
+      {/* 뒤로 가기 버튼 */}
       <div className="mb-6">
         <Link
           href={`/m/org/${id}/community`}
@@ -51,7 +62,7 @@ export default async function PostDetailPage({
         </Link>
       </div>
 
-      {/* 1. 게시글 헤더 */}
+      {/* 헤더 (제목, 작성자 등) */}
       <div className="mb-6">
         <div className="flex gap-2 mb-3">
           {post.type === "NOTICE" ? (
@@ -71,10 +82,20 @@ export default async function PostDetailPage({
               자유게시판
             </Badge>
           )}
+
+          {/* 🌟 명당자리: 권한이 있을 때만 삭제 버튼 노출 */}
         </div>
-        <h1 className="text-2xl md:text-3xl font-bold text-slate-900 leading-tight">
-          {post.title}
-        </h1>
+        <div className="flex items-center justify-between gap-4">
+          <h1 className="text-2xl md:text-3xl font-bold text-slate-900 leading-tight">
+            {post.title}
+          </h1>
+          <PostOptionsMenu
+            postId={post.id}
+            orgId={orgId}
+            canEdit={canEdit}
+            canDelete={canDelete}
+          />
+        </div>
 
         <div className="flex items-center justify-between mt-4 pb-4 border-b border-slate-100">
           <div className="flex items-center gap-3">
@@ -107,12 +128,14 @@ export default async function PostDetailPage({
         </div>
       </div>
 
-      {/* 2. 본문 내용 */}
-      <div className="prose prose-slate max-w-none min-h-[200px] mb-10 whitespace-pre-wrap leading-relaxed text-slate-800 text-[15px] md:text-base">
+      {/* 🌟 2. 본문 상단에 이미지 슬라이더 렌더링 (DB에 이미지가 1장이라도 있을 때만 보임) */}
+      <ImageSlider images={post.images} />
+
+      {/* 3. 본문 내용 */}
+      <div className="prose prose-slate max-w-none mb-10 whitespace-pre-wrap leading-relaxed text-slate-800 text-[15px] md:text-base">
         {post.content}
       </div>
 
-      {/* 🌟 하단에도 목록으로 돌아가기 버튼을 하나 더 배치하면 긴 글을 읽고 나서 바로 누르기 좋습니다 */}
       <div className="flex justify-center mt-10 mb-6">
         <Link
           href={`/m/org/${id}/community`}
@@ -124,11 +147,13 @@ export default async function PostDetailPage({
 
       <Separator className="my-8" />
 
-      {/* 3. 댓글 영역 */}
+      {/* 4. 댓글 영역 */}
       <CommentSection
         postId={post.id}
         comments={post.comments}
         currentUser={session?.user}
+        isAdmin={isAdmin}
+        orgId={orgId}
       />
     </div>
   );

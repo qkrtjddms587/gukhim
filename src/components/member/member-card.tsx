@@ -42,14 +42,14 @@ export function MemberCard({
     // 하이픈(-)이 있든 없든 가운데 자리를 마스킹 처리
     return phoneStr.replace(/^(\d{2,3})-?(\d{3,4})-?(\d{4})$/, "$1-****-$3");
   };
-
+  console.log(imageUrl);
   return (
     <div className="bg-white rounded-xl border border-slate-200 shadow-sm px-4 py-3 flex items-center gap-4">
       {/* 1. 좌측 프로필 이미지 */}
       <div className="shrink-0">
         <Avatar className="w-20 h-24 rounded-lg border bg-slate-50">
           <AvatarImage
-            src={`https://randomuser.me/api/portraits/men/${imageUrl}.jpg`}
+            src={`${process.env.NEXT_PUBLIC_S3_DOMAIN}/${process.env.NEXT_PUBLIC_S3_BUCKET}${imageUrl}`}
             className="object-cover"
           />
           <AvatarFallback className="rounded-lg text-slate-300 text-2xl font-bold bg-slate-100">

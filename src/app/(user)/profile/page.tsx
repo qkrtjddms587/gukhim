@@ -37,7 +37,8 @@ export default async function ProfilePage() {
           <Avatar className="w-16 h-16">
             <AvatarImage
               src={
-                `https://randomuser.me/api/portraits/men/${member.id}.jpg` || ""
+                `${process.env.NEXT_PUBLIC_S3_DOMAIN}/${process.env.NEXT_PUBLIC_S3_BUCKET}${member.image}` ||
+                ""
               }
             />
             <AvatarFallback className="bg-slate-200 text-xl font-bold text-slate-500">
