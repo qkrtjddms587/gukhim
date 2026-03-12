@@ -79,7 +79,12 @@ export function CommentItem({
   return (
     <div className="flex gap-3 py-2 border-b border-slate-100 last:border-0 group">
       <Avatar className="w-8 h-8">
-        <AvatarImage src={comment.member.image || ""} />
+        <AvatarImage
+          src={
+            `${process.env.NEXT_PUBLIC_S3_DOMAIN}/${process.env.NEXT_PUBLIC_S3_BUCKET}${comment.member.image}` ||
+            ""
+          }
+        />
         <AvatarFallback className="bg-slate-100 text-xs font-bold">
           {comment.member.name[0]}
         </AvatarFallback>

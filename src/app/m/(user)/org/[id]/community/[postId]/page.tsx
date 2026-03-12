@@ -12,6 +12,7 @@ import { ImageSlider } from "@/components/community/image-slider"; // 🌟 슬�
 import { DeletePostButton } from "@/components/community/delete-post-button";
 import { isContentOwner, isOrgAdmin } from "@/lib/auth/auth-utils";
 import { PostOptionsMenu } from "@/components/community/post-options-menu";
+import { includes } from "zod";
 
 export default async function PostDetailPage({
   params,
@@ -27,7 +28,13 @@ export default async function PostDetailPage({
     where: { id: Number(postId) },
     include: {
       author: {
-        select: { name: true, image: true, company: true, job: true },
+        select: {
+          name: true,
+          image: true,
+          affiliations: {
+            include: { Position: true, generation: { select: { name: true } } },
+          },
+        },
       },
       images: true, // 🌟 DB의 PostImage[] 데이터를 모두 가져옵니다.
       comments: {
@@ -38,6 +45,9 @@ export default async function PostDetailPage({
   });
 
   if (!post) notFound();
+
+  const genName = post.author.affiliations[0].generation.name;
+  const positionName = post.author.affiliations[0].Position?.name;
 
   const isAdmin = isOrgAdmin(session?.user, orgId);
   const isOwner = isContentOwner(session?.user, post.authorId);
@@ -100,7 +110,12 @@ export default async function PostDetailPage({
         <div className="flex items-center justify-between mt-4 pb-4 border-b border-slate-100">
           <div className="flex items-center gap-3">
             <Avatar className="w-10 h-10 border border-slate-200">
-              <AvatarImage src={post.author.image || ""} />
+              <AvatarImage
+                src={
+                  `${process.env.NEXT_PUBLIC_S3_DOMAIN}/${process.env.NEXT_PUBLIC_S3_BUCKET}${post.author.image}` ||
+                  ""
+                }
+              />
               <AvatarFallback className="bg-slate-100 text-slate-600 font-bold">
                 {post.author.name[0]}
               </AvatarFallback>
@@ -110,9 +125,8 @@ export default async function PostDetailPage({
                 {post.author.name}
               </div>
               <div className="text-xs text-slate-500">
-                {post.author.company || post.author.job
-                  ? `${post.author.company || ""} ${post.author.job || ""}`
-                  : "소속 정보 없음"}
+                {genName}
+                {positionName}
               </div>
             </div>
           </div>

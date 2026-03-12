@@ -84,7 +84,9 @@ export async function GET(req: Request) {
       authorName: post.author.name,
       authorImage: post.author.image,
       commentCount: post._count.comments,
-      thumbnail: post.images[0]?.url || null,
+      thumbnail:
+        `${process.env.NEXT_PUBLIC_S3_DOMAIN}/${process.env.NEXT_PUBLIC_S3_BUCKET}${post.images[0]?.url}` ||
+        null,
     }));
 
     return NextResponse.json({ success: true, data: formattedPosts });
