@@ -38,7 +38,26 @@ export async function POST(req: Request) {
     });
 
     return NextResponse.json({ success: true });
-  } catch (error) {
+  } catch (error: any) {
+    if (
+      error?.code === "ERR_JWT_EXPIRED" ||
+      error?.name === "TokenExpiredError"
+    ) {
+      console.warn("푸시 토큰 저장 - 토큰 만료됨 (401 리턴)");
+      return NextResponse.json(
+        { message: "Token expired", code: "TOKEN_EXPIRED" },
+        { status: 401 }
+      );
+    }
+
+    if (
+      error?.code === "ERR_JWS_SIGNATURE_VERIFICATION_FAILED" ||
+      error?.name === "JsonWebTokenError"
+    ) {
+      return NextResponse.json({ message: "Invalid token" }, { status: 401 });
+    }
+
+    // 🌟 3. 그 외 진짜 DB 에러나 서버 에러 (500 리턴)
     console.error("푸시 토큰 저장 에러:", error);
     return NextResponse.json(
       { error: "Internal Server Error" },

@@ -5,7 +5,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea"; // 🌟 delete 액션 추가
 import { useRouter } from "next/navigation";
-import { Trash2 } from "lucide-react"; // 🌟 삭제 아이콘 추가
 import {
   createCommentAction,
   deleteCommentAction,

@@ -72,12 +72,7 @@ export async function deletePostAction(postId: number, orgId: number) {
   // 세션의 role이 ADMIN이거나 작성자 ID가 본인 ID와 일치해야 함
   const isAdmin = isOrgAdmin(session.user, orgId);
   const isOwner = isContentOwner(session.user, post.authorId);
-  console.log("🔥🔥🔥 서버 액션 내부 권한 체크 🔥🔥🔥");
-  console.log("1. 넘어온 orgId:", orgId, "타입:", typeof orgId);
-  console.log("2. 내 affiliations:", session?.user?.affiliations);
-  console.log("4. isOwner 결과:", isOwner);
-  console.log("5. isAdmin 결과:", isAdmin);
-  console.log("결론: !isAdmin && !isOwner 결과는?", !isAdmin && !isOwner);
+
   if (!isAdmin && !isOwner) {
     throw new Error("삭제 권한이 없습니다.");
   }
