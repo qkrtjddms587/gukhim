@@ -19,7 +19,6 @@ export async function GET(req: Request) {
       );
     }
     const memberId = Number(decoded.sub);
-    console.log(memberId);
     // // 2. 파라미터 확인 및 동적 targetOrgId 설정
     const { searchParams } = new URL(req.url);
     let targetOrgId = searchParams.get("orgId")
