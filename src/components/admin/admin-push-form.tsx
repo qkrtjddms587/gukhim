@@ -44,7 +44,7 @@ export function AdminPushForm({ orgId }: AdminPushFormProps) {
       if (result.success) {
         alert(`✅ 발송 성공!\n${result.message}`);
         // 발송 완료 후 폼 초기화 또는 관리자 메인으로 이동
-        router.push(`/m/org/${orgId}/admin`);
+        // router.push(`/m/org/${orgId}/test`);
       } else {
         alert(`❌ 발송 실패: ${result.error}`);
       }

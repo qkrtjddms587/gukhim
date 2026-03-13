@@ -42,7 +42,6 @@ export async function sendGroupPushAction(
 
     // 3. 중복 토큰 제거
     const uniqueTokens = Array.from(new Set(deviceTokens.map((t) => t.token)));
-
     // 4. FCM 메시지 객체 조립
     const message = {
       notification: {
@@ -59,6 +58,9 @@ export async function sendGroupPushAction(
     // 🌟 5. 팀장님의 messaging 객체로 시원하게 발송!
     const response = await messaging.sendEachForMulticast(message);
 
+    console.log(uniqueTokens);
+    console.log(message);
+    console.log(response);
     console.log(
       `[FCM 발송 결과] 성공: ${response.successCount}건, 실패: ${response.failureCount}건`
     );

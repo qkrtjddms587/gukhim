@@ -14,6 +14,8 @@ import { prisma } from "@/lib/prisma";
 import { BackButton } from "@/components/common/back-button";
 import { WriteForm } from "@/components/community/write-form";
 import { isOrgAdmin } from "@/lib/auth/auth-utils";
+import Link from "next/link";
+import { ChevronLeft } from "lucide-react";
 
 export default async function WritePage({
   params,
@@ -27,10 +29,18 @@ export default async function WritePage({
   const isAdmin = isOrgAdmin(session?.user, orgId);
 
   return (
-    <div className="max-w-2xl mx-auto p-4 md:p-8">
+    <div className="max-w-2xl mx-auto p-4 pb-16 md:p-8">
+      <div className="mb-6">
+        <Link
+          href={`/m/org/${id}/community`}
+          className="inline-flex items-center text-sm font-medium text-slate-500 hover:text-slate-900 transition-colors"
+        >
+          <ChevronLeft className="w-4 h-4 mr-1" />
+          목록으로
+        </Link>
+      </div>
       <div>
         <h1 className="text-2xl font-bold mb-6">글쓰기</h1>
-        <BackButton />
       </div>
       <WriteForm orgId={orgId} isAdmin={isAdmin} />
     </div>
